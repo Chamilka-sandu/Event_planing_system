@@ -144,6 +144,7 @@ const GroupManagement: React.FC = () => {
       setError(error.response?.data?.error || error.response?.data);
     } finally {
       setIsDialogOpen(true); 
+      resetForm()
     }
   };
 

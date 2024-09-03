@@ -5,7 +5,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import axios from 'axios';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button, Typography } from '@mui/material';
 
-const API_BASE_URL = 'http://localhost:8080/api'; // Update with your actual base URL
+const API_BASE_URL = 'http://localhost:8080/api'; 
 
 const locales = {
   'en-US': require('date-fns/locale/en-US')

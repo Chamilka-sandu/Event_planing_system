@@ -229,20 +229,19 @@ const Dashboard: React.FC = () => {
     try {
       const eventDetails = await getEventById(eventId);
 
-      // Check if dateTime is already a string, then create a Date object if necessary
       const dateTime = typeof eventDetails.dateTime === 'string'
         ? new Date(eventDetails.dateTime)
         : eventDetails.dateTime;
 
       const transformedEvent: Event = {
         ...eventDetails,
-        dateTime: dateTime.toISOString(), // Convert Date to string
+        dateTime: dateTime.toISOString(), 
         inviteType: (eventDetails.inviteType === 'group' || eventDetails.inviteType === 'individual')
           ? eventDetails.inviteType
-          : undefined, // Ensure inviteType is one of the expected values
+          : undefined, 
       };
-      setEditEvent(transformedEvent); // Set the event details to state for editing
-      setModalOpen(true); // Open the modal for editing
+      setEditEvent(transformedEvent); 
+      setModalOpen(true);
 
     } catch (error) {
       console.error('Error fetching event details:', error);
