@@ -122,29 +122,7 @@ const GroupManagement: React.FC = () => {
     groupMembers: [] as User[]
   });
 
-  // const handleAddGroup = async () => {
-  //   if (!validateForm()) return;
-
-  //   try {
-  //     debugger
-  //     if (isEditing && currentGroupIndex !== null) {
-  //       // Update existing group
-  //       const groupToUpdate = groups[currentGroupIndex];
-  //       await editGroup(groupToUpdate.id, newGroup);
-  //       const updatedGroups = [...groups];
-  //       updatedGroups[currentGroupIndex] = newGroup;
-  //       setGroups(updatedGroups);
-  //     } else {
-  //       // Create new group
-  //       const response = await createGroup(newGroup);
-  //       setGroups([...groups, response]);
-  //     }
-  //   } catch (error: any) {
-  //     setError(error.response.data.error);
-  //   }
-
-  //   resetForm();
-  // };
+  
   const handleAddGroup = async () => {
     debugger
     if (!validateForm()) return;

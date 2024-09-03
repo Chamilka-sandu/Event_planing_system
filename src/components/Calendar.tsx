@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, TextField, FormControl, Select, MenuItem, FormControlLabel, Switch, RadioGroup, Radio, ListItemText, Checkbox, OutlinedInput, Typography } from '@mui/material';
+import { Modal, Button, TextField, FormControl, Select, MenuItem, FormControlLabel, Switch, RadioGroup, Radio, ListItemText, Checkbox, OutlinedInput, Typography, FormHelperText } from '@mui/material';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, parseISO } from 'date-fns';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -32,7 +32,7 @@ interface Event {
     latitude: number;
     longitude: number;
   };
-  eventType: string;
+  eventType: 'Conference' | 'Meetup' | 'Workshop';
   isPublic: boolean;
   status: 'SCHEDULED' | 'ONGOING' | 'POSTPONED' | 'CANCELLED';
   inviteType: 'group' | 'individual';
@@ -70,10 +70,10 @@ const Calendar: React.FC = () => {
       latitude: 0,
       longitude: 0,
     },
-    eventType: 'Conference',
+    eventType: '',
     isPublic: false,
     status: 'SCHEDULED',
-    inviteType: 'group',
+    inviteType: '',
 
     invitedGroups: [],
     invitedUsers: [],
@@ -119,13 +119,20 @@ const Calendar: React.FC = () => {
 
   const validateForm = () => {
     let tempErrors: { [key: string]: string } = {};
+    const currentDate = new Date();
+
     if (!newEvent.eventTitle) tempErrors.eventTitle = 'Event title is required';
-    // if (!newEvent.start) tempErrors.start = 'Start date and time is required';
-    // if (newEvent.start < new Date()) tempErrors.start = 'Start date and time cannot be in the past';
-    // if (!newEvent.end) tempErrors.end = 'End date and time is required';
-    // if (newEvent.end <= newEvent.start) tempErrors.end = 'End date and time must be after start date and time';
-    if (!newEvent.venue.address) tempErrors.venue = 'Venue is required';
-    // if (newEvent.attendees.length === 0) tempErrors.attendees = 'At least one attendee/group is required';
+    if (!newEvent.dateTime) tempErrors.dateTime = 'Date & Time is required';
+    else if (newEvent.dateTime < currentDate) tempErrors.dateTime = 'Cannot create event for past dates';
+    if (!newEvent.venue.address) tempErrors.venue = 'Venue address is required';
+
+    if (newEvent.inviteType === 'individual' && newEvent.invitedUsers.length === 0) {
+      tempErrors.invitedUsers = 'At least one user must be selected';
+    }
+
+    if (newEvent.inviteType === 'group' && newEvent.invitedGroups.length === 0) {
+      tempErrors.invitedGroups = 'At least one group must be selected';
+    }
 
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
@@ -148,21 +155,14 @@ const Calendar: React.FC = () => {
     fetchEvents();
   }, []);
 
-  // const handleSelectSlot = (slotInfo: { start: Date; end: Date }) => {
-  //   if (slotInfo.start < new Date()) {
-  //     alert("You cannot create an event for past dates.");
-  //     return;
-  //   }
-  //   setNewEvent({ ...newEvent, start: slotInfo.start, end: slotInfo.end });
-  //   setModalOpen(true);
-  // };
+
 
   const handleSelectEvent = (event: APIEvent) => {
     alert(`Event: ${event.eventTitle}`);
   };
 
   const handleSave = async () => {
-    debugger
+    if (validateForm()) {
 
     try {
       const savedEvent = await createEvent(newEvent);
@@ -172,7 +172,7 @@ const Calendar: React.FC = () => {
     } catch (error) {
       console.error('Error creating event:', error);
     }
-
+  }
   };
 
   const handleChangeMembers = (event: any) => {
@@ -206,142 +206,6 @@ const Calendar: React.FC = () => {
   return (
     <div>
       <Button variant="outlined" onClick={() => setModalOpen(true)}>Create Event</Button>
-      {/* <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-        <div style={{ padding: '20px', backgroundColor: 'white', margin: '50px auto', width: '80%', maxHeight: '90vh', overflowY: 'auto' }}>
-          <h3>Create New Event</h3>
-          <form style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-            <TextField
-              label="Event Title"
-              fullWidth
-              value={newEvent.eventTitle}
-              onChange={(e) => setNewEvent({ ...newEvent, eventTitle: e.target.value })}
-              error={!!errors.eventTitle}
-              helperText={errors.eventTitle}
-              style={{ marginBottom: '16px' }}
-            />
-            <TextField
-              label="Description"
-              fullWidth
-              multiline
-              rows={4}
-              value={newEvent.description}
-              onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-              style={{ marginBottom: '16px' }}
-            />
-            <TextField
-              label="Date & Time"
-              type="datetime-local"
-              fullWidth
-              value={format(newEvent.dateTime, "yyyy-MM-dd'T'HH:mm")}
-              onChange={(e) => setNewEvent({ ...newEvent, dateTime: new Date(e.target.value) })}
-              error={!!errors.start}
-              helperText={errors.start}
-              style={{ marginBottom: '16px' }}
-            />
-            <TextField
-              label="Address"
-              value={newEvent.venue.address}
-              onChange={(e) => setNewEvent({ ...newEvent, venue: { ...newEvent.venue, address: e.target.value } })}
-              style={{ marginBottom: '16px' }}
-            />
-            <TextField
-              label="Latitude"
-              type="number"
-              value={newEvent.venue.latitude}
-              onChange={(e) => setNewEvent({ ...newEvent, venue: { ...newEvent.venue, latitude: Number(e.target.value) } })}
-              style={{ marginBottom: '16px' }}
-            />
-            <TextField
-              label="Longitude"
-              type="number"
-              value={newEvent.venue.longitude}
-              onChange={(e) => setNewEvent({ ...newEvent, venue: { ...newEvent.venue, longitude: Number(e.target.value) } })}
-              style={{ marginBottom: '16px' }}
-            />
-
-
-            <FormControl fullWidth style={{ marginBottom: '16px' }}>
-              <Select
-              placeholder='Select Invite Type'
-                value={newEvent.inviteType}
-                onChange={(e) => setNewEvent({ ...newEvent, inviteType: e.target.value as 'group' | 'individual' })}
-              >
-                <MenuItem value="group">Group</MenuItem>
-                <MenuItem value="individual">Individual</MenuItem>
-              </Select>
-            </FormControl>
-
-            {newEvent.inviteType === 'individual' && (
-              <FormControl fullWidth style={{ marginBottom: '16px' }}>
-                <Select
-                placeholder='Select Users'
-                  multiple
-                  value={newEvent.invitedUsers.map(member => member.userName)}
-                  onChange={handleChangeMembers}
-                  input={<OutlinedInput label="users" />}
-                  renderValue={(selected) => selected.join(', ')}
-                >
-                  {users.map((user) => (
-                    <MenuItem key={user.userId} value={user.userName}>
-                      <Checkbox checked={newEvent.invitedUsers.some(member => member.userName === user.userName)} />
-                      <ListItemText primary={user.userName} />
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-
-            {newEvent.inviteType === 'group' && (
-              <FormControl fullWidth style={{ marginBottom: '16px' }}>
-                <Select
-                placeholder='Select Group Members'
-                  multiple
-                  value={newEvent.invitedGroups.map(group => group.groupName)}
-                  onChange={handleChangeGroup}
-                  input={<OutlinedInput label="Group Members" />}
-                  renderValue={(selected) => selected.join(', ')}
-                >
-                  {groups.map((group) => (
-                    <MenuItem key={group.groupCode} value={group.groupName}>
-                      <Checkbox checked={newEvent.invitedGroups.some(selectedGroup => selectedGroup.groupName === group.groupName)} />
-                      <ListItemText primary={group.groupName} />
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={newEvent.isPublic}
-                  onChange={(e) => setNewEvent({ ...newEvent, isPublic: e.target.checked })}
-                />
-              }
-              label="Public Event"
-              style={{ marginBottom: '16px' }}
-            />
-            <FormControl component="fieldset" style={{ marginBottom: '16px' }}>
-              <RadioGroup
-                value={newEvent.status}
-                onChange={(e) => setNewEvent({ ...newEvent, status: e.target.value as 'SCHEDULED' | 'ONGOING' | 'POSTPONED' | 'CANCELLED' })}
-              >
-                <FormControlLabel value="SCHEDULED" control={<Radio />} label="Scheduled" />
-                <FormControlLabel value="ONGOING" control={<Radio />} label="Ongoing" />
-                <FormControlLabel value="POSTPONED" control={<Radio />} label="Postponed" />
-                <FormControlLabel value="CANCELLED" control={<Radio />} label="Cancelled" />
-              </RadioGroup>
-            </FormControl>
-            <Button onClick={handleSave} variant="contained" color="primary">
-              Save
-            </Button>
-            <Button onClick={() => setModalOpen(false)} variant="contained" color="secondary" style={{ marginLeft: '16px' }}>
-              Cancel
-            </Button>
-          </form>
-        </div>
-      </Modal> */}
-
       <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
         <div style={{ padding: '20px', backgroundColor: 'white', margin: '50px auto', width: '80%', maxHeight: '90vh', overflowY: 'auto' }}>
           <h3>Create New Event</h3>
@@ -362,6 +226,7 @@ const Calendar: React.FC = () => {
               rows={4}
               value={newEvent.description}
               onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+              
               style={{ marginBottom: '16px' }}
             />
             <TextField
@@ -370,8 +235,8 @@ const Calendar: React.FC = () => {
               fullWidth
               value={format(newEvent.dateTime, "yyyy-MM-dd'T'HH:mm")}
               onChange={(e) => setNewEvent({ ...newEvent, dateTime: new Date(e.target.value) })}
-              error={!!errors.start}
-              helperText={errors.start}
+              error={!!errors.dateTime}
+              helperText={errors.dateTime}
               style={{ marginBottom: '16px' }}
             />
             <TextField
@@ -380,6 +245,8 @@ const Calendar: React.FC = () => {
               value={newEvent.venue.address}
               onChange={(e) => setNewEvent({ ...newEvent, venue: { ...newEvent.venue, address: e.target.value } })}
               style={{ marginBottom: '16px' }}
+              error={!!errors.venue}
+            helperText={errors.venue}
             />
             <TextField
               label="Latitude"
@@ -397,55 +264,45 @@ const Calendar: React.FC = () => {
               onChange={(e) => setNewEvent({ ...newEvent, venue: { ...newEvent.venue, longitude: Number(e.target.value) } })}
               style={{ marginBottom: '16px' }}
             />
+            <Typography style={{ marginRight: '16px', color: 'gray' }}>Event Type</Typography>
 
-            {/* <FormControl fullWidth style={{ marginBottom: '16px' }}>
+            <FormControl fullWidth margin="normal">
               <Select
-                value={newEvent.inviteType}
-                onChange={(e) => setNewEvent({ ...newEvent, inviteType: e.target.value as 'group' | 'individual' })}
-              >
-                <MenuItem value="group">Group</MenuItem>
-                <MenuItem value="individual">Individual</MenuItem>
-              </Select>
-            </FormControl> */}
-            <FormControl fullWidth style={{ marginBottom: '16px' }}>
-              <Select
-                value={newEvent.inviteType || ""}
-                onChange={(e) => setNewEvent({ ...newEvent, inviteType: e.target.value as 'group' | 'individual' })}
+                label='eventType'
+                value={newEvent.eventType || ''}
+                onChange={(e) => setNewEvent({ ...newEvent, eventType: e.target.value as '' | 'Conference' | 'Meetup' | 'Workshop' })}
                 displayEmpty
                 renderValue={(selected) => {
                   if (!selected) {
-                    return <em>Select Invite Type</em>;
+                    return <em>Select Event Type</em>;
                   }
-                  return selected.charAt(0).toUpperCase() + selected.slice(1);
+                  return selected;
                 }}
               >
-                <MenuItem value="" disabled>
-                  <em>Select Invite Type</em>
-                </MenuItem>
-                <MenuItem value="group">Group</MenuItem>
-                <MenuItem value="individual">Individual</MenuItem>
+                <MenuItem value=""><em>Select Event Type</em></MenuItem>
+                <MenuItem value="Conference">Conference</MenuItem>
+                <MenuItem value="Meetup">Meetup</MenuItem>
+                <MenuItem value="Workshop">Workshop</MenuItem>
               </Select>
             </FormControl>
 
+            <Typography style={{ marginRight: '16px', color: 'gray' }}>Invite Type</Typography>
+
+            <FormControl component="fieldset" fullWidth style={{ marginBottom: '16px' }}>
+              <RadioGroup
+                value={newEvent.inviteType}
+                onChange={(e) => setNewEvent({ ...newEvent, inviteType: e.target.value as 'group' | 'individual' })}
+                row
+              >
+                <FormControlLabel value="group" control={<Radio />} label="Group" />
+                <FormControlLabel value="individual" control={<Radio />} label="Individual" />
+              </RadioGroup>
+            </FormControl>
+
+
 
             {newEvent.inviteType === 'individual' && (
-              // <FormControl fullWidth style={{ marginBottom: '16px' }}>
-              //   <Select
 
-              //     multiple
-              //     value={newEvent.invitedUsers.map(member => member.userName)}
-              //     onChange={handleChangeMembers}
-              //     input={<OutlinedInput label="Users" />}
-              //     renderValue={(selected) => selected.join(', ')}
-              //   >
-              //     {users.map((user) => (
-              //       <MenuItem key={user.userId} value={user.userName}>
-              //         <Checkbox checked={newEvent.invitedUsers.some(member => member.userName === user.userName)} />
-              //         <ListItemText primary={user.userName} />
-              //       </MenuItem>
-              //     ))}
-              //   </Select>
-              // </FormControl>
               <FormControl fullWidth style={{ marginBottom: '16px' }}>
                 <Select
                   multiple
@@ -459,6 +316,7 @@ const Calendar: React.FC = () => {
                     }
                     return selected.join(', ');
                   }}
+                  
                 >
                   <MenuItem value="" disabled>
                     <em>Select Users</em>
@@ -470,31 +328,15 @@ const Calendar: React.FC = () => {
                     </MenuItem>
                   ))}
                 </Select>
+                {!!errors.invitedUsers && (
+                <FormHelperText sx={{ color: 'red'}} >{errors.invitedUsers}</FormHelperText>
+              )}
               </FormControl>
 
             )}
 
             {newEvent.inviteType === 'group' && (
-              //         <FormControl fullWidth style={{ marginBottom: '16px' }}>
-              //           <Select
-              //             multiple
-              //             value={newEvent.invitedGroups.map(group => group.groupName)}
-              //             onChange={handleChangeGroup}
-              //             input={<OutlinedInput label="Group Members" />}
-              //             renderValue={(selected) => selected.join(', ')}
 
-              //           >
-              //             <MenuItem value="" disabled>
-              //   <em>Select Group Members</em>
-              // </MenuItem>
-              //             {groups.map((group) => (
-              //               <MenuItem key={group.groupCode} value={group.groupName}>
-              //                 <Checkbox checked={newEvent.invitedGroups.some(selectedGroup => selectedGroup.groupName === group.groupName)} />
-              //                 <ListItemText primary={group.groupName} />
-              //               </MenuItem>
-              //             ))}
-              //           </Select>
-              //         </FormControl>
               <FormControl fullWidth style={{ marginBottom: '16px' }}>
                 <Select
                   multiple
@@ -508,6 +350,7 @@ const Calendar: React.FC = () => {
                     }
                     return selected.join(', ');
                   }}
+                  
                 >
                   <MenuItem value="" disabled>
                     <em>Select Group Members</em>
@@ -519,6 +362,9 @@ const Calendar: React.FC = () => {
                     </MenuItem>
                   ))}
                 </Select>
+                {!!errors.invitedGroups && (
+                <FormHelperText sx={{ color: 'red',}} >{errors.invitedGroups}</FormHelperText>
+              )}
               </FormControl>
 
             )}
@@ -535,17 +381,19 @@ const Calendar: React.FC = () => {
             />
             <Typography style={{ marginRight: '16px', color: 'gray' }}>Status</Typography>
 
-            <FormControl component="fieldset" style={{ marginBottom: '16px' }}>
-              <RadioGroup
+            <FormControl fullWidth style={{ marginBottom: '16px' }}>
+              <Select
                 value={newEvent.status}
                 onChange={(e) => setNewEvent({ ...newEvent, status: e.target.value as 'SCHEDULED' | 'ONGOING' | 'POSTPONED' | 'CANCELLED' })}
+                label="Status"
               >
-                <FormControlLabel value="SCHEDULED" control={<Radio />} label="Scheduled" />
-                <FormControlLabel value="ONGOING" control={<Radio />} label="Ongoing" />
-                <FormControlLabel value="POSTPONED" control={<Radio />} label="Postponed" />
-                <FormControlLabel value="CANCELLED" control={<Radio />} label="Cancelled" />
-              </RadioGroup>
+                <MenuItem value="SCHEDULED">Scheduled</MenuItem>
+                <MenuItem value="ONGOING">Ongoing</MenuItem>
+                <MenuItem value="POSTPONED">Postponed</MenuItem>
+                <MenuItem value="CANCELLED">Cancelled</MenuItem>
+              </Select>
             </FormControl>
+
 
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Button onClick={handleSave} variant="contained" color="primary">

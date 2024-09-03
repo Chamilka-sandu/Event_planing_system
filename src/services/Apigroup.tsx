@@ -1,9 +1,8 @@
 import axios from 'axios';
 
-// Define the base URL for the API
-const BASE_URL = 'http://localhost:8080/api/groups'; // Adjust the base URL as needed
+const BASE_URL = 'http://localhost:8080/api/groups';
 
-// Type definitions
+
 export interface User {
   userId: string;
   userName: string;
@@ -46,7 +45,6 @@ export const editGroup = async (groupId: number, groupData: any) => {
   }
 };
 
-// Delete a group by its ID
 export const deleteGroup = async (id: number): Promise<void> => {
   await axios.delete(`${BASE_URL}/${id}`);
 };

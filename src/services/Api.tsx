@@ -8,10 +8,10 @@ export interface Event {
  
   inviteType: string;
   
-  id?: number;  // Optional for create
+  id?: number;  
   eventTitle: string;
   description: string;
-  dateTime: Date;  // Ensure this matches the backend format (ISO string, etc.)
+  dateTime: Date;
   venue: {
     address: string;
     latitude: number;
@@ -19,9 +19,9 @@ export interface Event {
   };
   eventType: string;
   isPublic: boolean;
-  status: 'SCHEDULED' | 'ONGOING' | 'POSTPONED' | 'CANCELLED';  // Ensure backend matches these values
-  invitedGroups: Group[];  // Assuming these are group IDs
-  invitedUsers:  User[];  // Assuming these are user IDs
+  status: 'SCHEDULED' | 'ONGOING' | 'POSTPONED' | 'CANCELLED';  
+  invitedGroups: Group[];  
+  invitedUsers:  User[];  
 }
 
 // Fetch all events

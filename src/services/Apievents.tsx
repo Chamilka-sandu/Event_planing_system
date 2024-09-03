@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/api'; // Update with your actual base URL
+const API_BASE_URL = 'http://localhost:8080/api'; 
 
 export interface ApiEvent {
     eventId:number;
@@ -18,9 +18,9 @@ export interface ApiEvent {
     isPublic: boolean;
     status: string;
     inviteType: string;
-    attendees: number[]; // Ensure this matches the API response
-    invitedGroups: number[]; // Ensure this matches the API response
-    invitedUsers: number[]; // Ensure this matches the API response
+    attendees: number[]; 
+    invitedGroups: number[]; 
+    invitedUsers: number[]; 
   }
   
   
@@ -59,28 +59,17 @@ export const updateEvent = async (id: number, updatedEvent: Partial<Event>) => {
   return await response.json();
 };
 
-  
-  // export const getEventById = async (id: number) => {
-  //   try {
-  //     const response = await axios.get(`${API_BASE_URL}/events/${id}`);
-  //     return response.data; // Return the event data
-  //   } catch (error) {
-  //     console.error('Failed to fetch event:', error);
-  //     throw error; // Throw the error to handle it in the calling component
-  //   }
-  // };
   export const getEventById = async (eventId: number): Promise<Event> => {
     const response = await fetch(`/api/events/${eventId}`);
     const data = await response.json();
   
     return {
       ...data,
-      dateTime: new Date(data.dateTime).toISOString(), // Convert Date to string if needed
+      dateTime: new Date(data.dateTime).toISOString(), 
     };
   };
   
 
-  // Delete an event
 export const deleteEvent = async (id: number) => {
   try {
       await axios.delete(`${API_BASE_URL}/events/${id}`);
